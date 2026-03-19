@@ -60,7 +60,7 @@ class Blockchain:
             economy[tx.sender] -= tx.amount
             economy[tx.receiver] += tx.amount
             if tx.sender != NETWORK_ID and economy[tx.sender] < 0:
-                raise EconomyError("")
+                raise EconomyError(f"Invalid transaction: sender {tx.sender} has insufficient balance. Current balance: {economy[tx.sender]}, transaction amount: {tx.amount}")
         return economy
     
     def _validate_consecutive_blocks(self, block: Block, prev_block: Block):
@@ -89,7 +89,7 @@ class Blockchain:
     
     def overwrite(self, other: "Blockchain"):
         if self.length >= other.length:
-            raise 
+            raise # or return? maybe is not an error, just do nothing
         other.validate_full_chain()
         self.__chain = other.chain
         self.__economy = self.compute_economy()
