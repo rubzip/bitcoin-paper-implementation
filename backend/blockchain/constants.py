@@ -1,0 +1,2 @@
+MINING_REWARD: int = 50
+NETWORK_ID: str = "NETWORK"

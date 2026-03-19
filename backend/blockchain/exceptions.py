@@ -1,9 +1,14 @@
 class BlockchainError(Exception):
     pass
-class EconomyError(BlockchainError): 
+
+
+class EconomyError(BlockchainError):
     pass
-class SecurityError(BlockchainError): 
+
+
+class SecurityError(BlockchainError):
     pass
+
 
 class MiningError(BlockchainError):
     pass

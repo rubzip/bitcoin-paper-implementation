@@ -1,95 +1,128 @@
 from collections import defaultdict
 from typing import List
-import json
 
-from backend.blockchain.utils.hashing import Hasher, Sha256Hasher
-from backend.blockchain.utils.proof_of_work import ProofOfWork, ZerosPOW
+
+from backend.blockchain.utils.hashing import Sha256Hasher
+from backend.blockchain.utils.proof_of_work import ZerosPOW
 from backend.blockchain.models import Block, Transaction
 from backend.blockchain.exceptions import EconomyError
+from backend.blockchain.constants import NETWORK_ID
 
-NETWORK_ID = "NETWORK"
+
+
+class Ledger:
+    def __init__(self, balances: defaultdict = None):
+        self.__balances = balances or defaultdict(int)
+
+    def apply_transaction(self, tx: Transaction):
+        self.__balances[tx.sender] -= tx.amount
+        self.__balances[tx.receiver] += tx.amount
+
+    def apply_block(self, block: Block):
+        for tx in block.transactions:
+            self.apply_transaction(tx)
+
+    def get_balance(self, user: str) -> int:
+        return self.__balances.get(user, 0)
+
+    def copy(self) -> "Ledger":
+        return Ledger(self.__balances.copy())
+
+
+class Validator:
+    @classmethod
+    def validate_transaction(cls, ledger: Ledger, transaction: Transaction):
+        balance = ledger.get_balance(transaction.sender)
+        if transaction.sender != NETWORK_ID and balance < transaction.amount:
+            raise EconomyError(f"Sender '{transaction.sender}' has insufficient balance.\n\tCurrent balance: {balance}\n\tTransaction amount: {transaction.amount}")
+    
+    @classmethod
+    def validate_consecutive_blocks(cls, block: Block, prev_block: Block):
+        if block.hash != block.get_hash():
+            raise ValueError("Invalid block hash")
+        if block.prev_hash != prev_block.hash:
+            raise ValueError("Block prev_hash does not match previous block hash")
+        if not ZerosPOW.is_valid_hash(block.hash):
+            raise ValueError("Block hash does not satisfy Proof of Work")
+    
+    @classmethod
+    def validate_full_chain(cls, chain: List[Block]):
+        if len(chain) == 0:
+            raise ValueError("Chain is empty!")
+        if chain[0].prev_hash != Sha256Hasher.default_hash():
+            raise ValueError("Genesis block has invalid prev_hash")
+        
+        n = len(chain)
+        for i in range(1, n):
+            block, prev_block = chain[i], chain[i-1]
+            cls.validate_consecutive_blocks(block, prev_block)
+            if block.index != i:
+                raise ValueError(f"Block index mismatch at {i}")
 
 
 class Blockchain:
     def __init__(self):
-        self.difficulty: int = 4
-        self.pow = ZerosPOW(self.difficulty)
-        self.hasher = Sha256Hasher
         self.__chain: List[Block] = []
-        
-        self.__create_genesis_block()
-        self.__economy = self.compute_economy()
+        self.__ledger = Ledger()
+        self.create_genesis_block()
     
-    def __create_genesis_block(self):
-        genesis = Block(0, [], self.hasher.default_hash())
-        genesis.mine(self.pow)
+    @classmethod
+    def from_chain(cls, chain: List[Block]):
+        blockchain = cls()
+        Validator.validate_full_chain(chain)
+        blockchain.__chain = chain
+        blockchain.__ledger = Ledger()
+        for block in chain:
+            blockchain.__ledger.apply_block(block)
+        return blockchain
+    
+    def create_genesis_block(self):
+        if self.length > 0:
+            raise ValueError("Genesis block already exists.")
+        genesis = Block(0, [], Sha256Hasher.default_hash())
+        genesis.mine()
         self.__chain.append(genesis)
+        self.__ledger.apply_block(genesis)
     
     def add_block(self, block: Block):
-        self._validate_consecutive_blocks(block, self.last_block)
-        new_economy = self._update_economy(block, self.__economy)
+        last_block = self.__chain[-1]
+        Validator.validate_consecutive_blocks(block, last_block)
+        
+        new_ledger = self.__ledger.copy()
+        for tx in block.transactions:
+            Validator.validate_transaction(new_ledger, tx)
+            new_ledger.apply_transaction(tx)
 
         self.__chain.append(block)
-        self.__economy = new_economy
+        self.__ledger = new_ledger
+
+    def overwrite(self, chain: List[Block]):
+        if self.length >= len(chain):
+            return
+        
+        new_bc = Blockchain.from_chain(chain)
+        self.__chain = new_bc.chain
+        self.__ledger = new_bc.__ledger
+        del new_bc
 
     @property
-    def last_block(self) -> Block:
-        return self.__chain[-1]
-    
-    @property
     def chain(self) -> List[Block]:
-        return self.__chain
+        return self.__chain.copy()
     
     @property
     def length(self) -> int:
         return len(self.__chain)
     
     @property
+    def last_block(self) -> Block:
+        return self.__chain[-1]
+    
+    @property
     def last_hash(self) -> str:
         return self.last_block.hash
     
-    def compute_economy(self) -> defaultdict:
-        economy = defaultdict(int)
-        for block in self.__chain:
-            economy = self._update_economy(block, economy)
-        return economy
-        
-    def _update_economy(self, block: Block, prev_economy: defaultdict) -> defaultdict:
-        economy = prev_economy.copy()
-        for tx in block.transactions:
-            economy[tx.sender] -= tx.amount
-            economy[tx.receiver] += tx.amount
-            if tx.sender != NETWORK_ID and economy[tx.sender] < 0:
-                raise EconomyError(f"Invalid transaction: sender {tx.sender} has insufficient balance. Current balance: {economy[tx.sender]}, transaction amount: {tx.amount}")
-        return economy
-    
-    def _validate_consecutive_blocks(self, block: Block, prev_block: Block):
-        if block.hash != block.get_hash():
-            raise
-        if block.prev_hash != prev_block.get_hash():
-            raise
-        if not self.pow.is_valid_hash(block.hash):
-            raise
-    
-    def validate_full_chain(self):
-        if self.length == 0:
-            raise
-        if self.__chain[0].prev_hash != self.hasher.default_hash():
-            raise
-        n = len(self.__chain)
-        for i in range(n - 1):
-            block, prev_block = self.__chain[i+1], self.__chain[i]
-            self._validate_consecutive_blocks(block, prev_block)
-            if block.index != i:
-                raise
-        self.compute_economy()
-    
     def get_balance(self, user: str) -> int:
-        return self.__economy.get(user)
-    
-    def overwrite(self, other: "Blockchain"):
-        if self.length >= other.length:
-            raise # or return? maybe is not an error, just do nothing
-        other.validate_full_chain()
-        self.__chain = other.chain
-        self.__economy = self.compute_economy()
+        return self.__ledger.get_balance(user)
+
+    def validate_transaction(self, tx: Transaction):
+        Validator.validate_transaction(self.__ledger, tx)

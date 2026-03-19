@@ -15,4 +15,4 @@ class Sha256Hasher(Hasher):
 
     @classmethod
     def default_hash(cls) -> str:
-        return '0' * 64
+        return 64 * '0'

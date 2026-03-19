@@ -4,27 +4,26 @@ import time
 from backend.blockchain.core import Blockchain, NETWORK_ID
 from backend.blockchain.models import Block, Transaction
 from backend.blockchain.exceptions import MiningError, EconomyError
+from backend.blockchain.constants import MINING_REWARD, NETWORK_ID
+
 
 class Node:
-    def __init__(self, node_id: str, mining_reward: int = 50):
+    def __init__(self, node_id: str):
         self.node_id = node_id
         self.blockchain = Blockchain()
         self.pending_transactions: List[Transaction] = []
-        self.mining_reward = mining_reward
 
     def add_transaction(self, sender: str, receiver: str, amount: int):
-        if sender != NETWORK_ID and self.blockchain.get_balance(sender) < amount:
-            raise EconomyError(f"Sender {sender} has insufficient balance. Current balance: {self.blockchain.get_balance(sender)}, transaction amount: {amount}")
-        
         tx = Transaction(sender, receiver, amount, time.time())
+        self.blockchain.validate_transaction(tx)
         self.pending_transactions.append(tx)
 
     def mine(self, miner: str):
-        reward = Transaction(NETWORK_ID, miner, self.mining_reward, time.time())
+        reward = Transaction(NETWORK_ID, miner, MINING_REWARD, time.time())
         transactions = self.pending_transactions + [reward]
         
         new_block = Block(self.blockchain.length, transactions, self.blockchain.last_hash)
-        new_block.mine(self.blockchain.pow)
+        new_block.mine()
         
         try:
             self.blockchain.add_block(new_block)

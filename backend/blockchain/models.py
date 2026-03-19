@@ -1,10 +1,9 @@
+import time
 from typing import List
 import json
 
-
-from backend.blockchain.core import NETWORK_ID
-from backend.blockchain.utils.proof_of_work import ProofOfWork, ZerosPOW
-from backend.blockchain.utils.hashing import Hasher, Sha256Hasher
+from backend.blockchain.utils.proof_of_work import ZerosPOW
+from backend.blockchain.utils.hashing import Sha256Hasher
 
 
 class Transaction:
@@ -19,32 +18,40 @@ class Transaction:
 
 
 class Block:
-    def __init__(self, index: int, transactions: List[Transaction], prev_hash: str, hasher: Hasher = Sha256Hasher, timestamp: float = None):
+    def __init__(
+        self,
+        index: int,
+        transactions: List[Transaction],
+        prev_hash: str,
+        timestamp: float = None,
+    ):
         self.index = index
         self.transactions = sorted(transactions, key=lambda x: x.timestamp)
         self.prev_hash = prev_hash
         self.timestamp = timestamp or time.time()
-        self.hasher = hasher
         self.nonce = 0
         self.hash = self.get_hash()
 
     def get_hash(self) -> str:
-        content = self.dump()
-        return self.hasher.hash(content)
+        content = str(self)
+        return Sha256Hasher.hash(content)
 
-    def mine(self, pow_validator: ProofOfWork):
-        while not pow_validator.is_valid_hash(self.hash):
+    def mine(self):
+        while not ZerosPOW.is_valid_hash(self.hash):
             self.nonce += 1
             self.hash = self.get_hash()
         return self.hash
-    
-    def dump(self) -> str:
+
+    def __str__(self):
         tx_dicts = [tx.to_tuple() for tx in self.transactions]
-        content = json.dumps({
-            "index": self.index,
-            "prev_hash": self.prev_hash,
-            "timestamp": self.timestamp,
-            "transactions": tx_dicts,
-            "nonce": self.nonce
-        }, sort_keys=True)
+        content = json.dumps(
+            {
+                "index": self.index,
+                "prev_hash": self.prev_hash,
+                "timestamp": self.timestamp,
+                "transactions": tx_dicts,
+                "nonce": self.nonce,
+            },
+            sort_keys=True,
+        )
         return content
