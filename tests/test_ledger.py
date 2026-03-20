@@ -1,6 +1,6 @@
 import pytest
-from backend.blockchain.core import Ledger, NETWORK_ID
-from backend.blockchain.models import Transaction
+from bitcoin.blockchain.core import Ledger, NETWORK_ID
+from bitcoin.blockchain.models import Transaction
 
 @pytest.fixture
 def ledger():

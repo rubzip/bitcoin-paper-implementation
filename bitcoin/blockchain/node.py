@@ -1,10 +1,10 @@
 from typing import List
 import time
 
-from backend.blockchain.core import Blockchain, NETWORK_ID
-from backend.blockchain.models import Block, Transaction
-from backend.blockchain.exceptions import MiningError, EconomyError
-from backend.blockchain.constants import MINING_REWARD, NETWORK_ID
+from bitcoin.blockchain.core import Blockchain, NETWORK_ID
+from bitcoin.blockchain.models import Block, Transaction
+from bitcoin.blockchain.exceptions import MiningError, EconomyError
+from bitcoin.blockchain.constants import MINING_REWARD, NETWORK_ID
 
 
 class Node:

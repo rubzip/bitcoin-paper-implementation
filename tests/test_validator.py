@@ -1,8 +1,8 @@
 import pytest
-from backend.blockchain.core import Ledger, Validator, NETWORK_ID
-from backend.blockchain.models import Transaction, Block
-from backend.blockchain.exceptions import EconomyError
-from backend.blockchain.utils.hashing import Sha256Hasher
+from bitcoin.blockchain.core import Ledger, Validator, NETWORK_ID
+from bitcoin.blockchain.models import Transaction, Block
+from bitcoin.blockchain.exceptions import EconomyError
+from bitcoin.blockchain.utils.hashing import Sha256Hasher
 
 @pytest.fixture
 def ledger():
@@ -35,3 +35,18 @@ def test_validate_consecutive_blocks_hash_mismatch():
     b2.mine()
     with pytest.raises(ValueError):
         Validator.validate_consecutive_blocks(b2, b1)
+
+def test_validate_full_chain_invalid_index():
+    b1 = Block(0, [], Sha256Hasher.default_hash(), 1.0)
+    b1.mine()
+    b2 = Block(2, [], b1.hash, 2.0) # Wrong index (should be 1)
+    b2.mine()
+    with pytest.raises(ValueError) as excinfo:
+        Validator.validate_full_chain([b1, b2])
+    assert "index mismatch" in str(excinfo.value)
+
+def test_validate_transaction_network_id(ledger):
+    # Network ID bypasses balance check
+    tx = Transaction(NETWORK_ID, "Alice", 1000000, 1.0)
+    # Should NOT raise EconomyError
+    Validator.validate_transaction(ledger, tx)

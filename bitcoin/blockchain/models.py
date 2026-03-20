@@ -2,8 +2,8 @@ import time
 from typing import List
 import json
 
-from backend.blockchain.utils.proof_of_work import ZerosPOW
-from backend.blockchain.utils.hashing import Sha256Hasher
+from bitcoin.blockchain.utils.proof_of_work import ZerosPOW
+from bitcoin.blockchain.utils.hashing import Sha256Hasher
 
 
 class Transaction:
@@ -15,6 +15,14 @@ class Transaction:
 
     def to_tuple(self) -> tuple:
         return (self.sender, self.receiver, self.amount, self.timestamp)
+
+    def to_dict(self) -> dict:
+        return {
+            "sender": self.sender,
+            "receiver": self.receiver,
+            "amount": self.amount,
+            "timestamp": self.timestamp
+        }
 
 
 class Block:
@@ -35,6 +43,16 @@ class Block:
     def get_hash(self) -> str:
         content = str(self)
         return Sha256Hasher.hash(content)
+
+    def to_dict(self) -> dict:
+        return {
+            "index": self.index,
+            "transactions": [tx.to_dict() for tx in self.transactions],
+            "prev_hash": self.prev_hash,
+            "timestamp": self.timestamp,
+            "nonce": self.nonce,
+            "hash": self.hash
+        }
 
     def mine(self):
         while not ZerosPOW.is_valid_hash(self.hash):

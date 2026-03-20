@@ -1,7 +1,7 @@
 import pytest
-from backend.blockchain.node import Node
-from backend.blockchain.core import NETWORK_ID
-from backend.blockchain.exceptions import EconomyError
+from bitcoin.blockchain.node import Node
+from bitcoin.blockchain.core import NETWORK_ID
+from bitcoin.blockchain.exceptions import EconomyError
 
 @pytest.fixture
 def node():

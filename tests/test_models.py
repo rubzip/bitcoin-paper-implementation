@@ -1,7 +1,7 @@
 import pytest
 import time
-from backend.blockchain.models import Transaction, Block
-from backend.blockchain.utils.hashing import Sha256Hasher
+from bitcoin.blockchain.models import Transaction, Block
+from bitcoin.blockchain.utils.hashing import Sha256Hasher
 
 def test_transaction_to_tuple():
     tx = Transaction("Alice", "Bob", 10, 123.456)

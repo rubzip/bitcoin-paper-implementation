@@ -2,11 +2,11 @@ from collections import defaultdict
 from typing import List
 
 
-from backend.blockchain.utils.hashing import Sha256Hasher
-from backend.blockchain.utils.proof_of_work import ZerosPOW
-from backend.blockchain.models import Block, Transaction
-from backend.blockchain.exceptions import EconomyError
-from backend.blockchain.constants import NETWORK_ID
+from bitcoin.blockchain.utils.hashing import Sha256Hasher
+from bitcoin.blockchain.utils.proof_of_work import ZerosPOW
+from bitcoin.blockchain.models import Block, Transaction
+from bitcoin.blockchain.exceptions import EconomyError
+from bitcoin.blockchain.constants import NETWORK_ID
 
 
 

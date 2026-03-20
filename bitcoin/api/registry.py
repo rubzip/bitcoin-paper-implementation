@@ -3,10 +3,9 @@ import asyncio
 import httpx
 from fastapi import FastAPI, BackgroundTasks
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
+from bitcoin.api.schemas import AvailablePeers, Hello
 
-from backend.api.schemas import AvailablePeers, Hello
-
-# Set of available peer URLs
 available_peers: Set[str] = set()
 
 async def check_peers(validation_time: float = 60.0):
@@ -17,7 +16,6 @@ async def check_peers(validation_time: float = 60.0):
             peers_to_remove = []
             for peer_url in list(available_peers):
                 try:
-                    # Health check: expect 200 OK from the root
                     response = await client.get(peer_url, timeout=5.0)
                     if response.status_code != 200:
                         peers_to_remove.append(peer_url)
@@ -29,10 +27,8 @@ async def check_peers(validation_time: float = 60.0):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Start the background task
     bg_task = asyncio.create_task(check_peers())
     yield
-    # Cleanup: stop the background task
     bg_task.cancel()
     try:
         await bg_task
@@ -41,19 +37,24 @@ async def lifespan(app: FastAPI):
 
 peer_handler = FastAPI(lifespan=lifespan)
 
+peer_handler.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @peer_handler.get("/")
 async def get_status():
-    """Standard response for health checks"""
-    return {"status": "Central node is running"}
+    return {"status": "Central node is running", "api": "Registry"}
 
 @peer_handler.post("/hello")
 async def say_hello(payload: Hello) -> dict[str, str]:
-    """Receive hello from peer and register it"""
     peer_url = payload.peer_url
     available_peers.add(peer_url)
     return {"message": f"Hello from central node! Received hello from {peer_url}"}
 
 @peer_handler.get("/peers", response_model=AvailablePeers)
 async def get_peers() -> AvailablePeers:
-    """Return list of available peers"""
     return AvailablePeers(peers=list(available_peers))

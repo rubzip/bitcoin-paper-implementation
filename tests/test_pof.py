@@ -1,6 +1,6 @@
 import pytest
-from backend.blockchain.utils.proof_of_work import ZerosPOW
-from backend.blockchain.utils.hashing import Sha256Hasher
+from bitcoin.blockchain.utils.proof_of_work import ZerosPOW
+from bitcoin.blockchain.utils.hashing import Sha256Hasher
 
 
 def test_zeros_pow():
