@@ -8,6 +8,7 @@ from bitcoin.api.schemas import AvailablePeers, Hello
 
 available_peers: Set[str] = set()
 
+
 async def check_peers(validation_time: float = 60.0):
     """Periodic task to ping peers and remove unresponsive ones"""
     while True:
@@ -21,9 +22,10 @@ async def check_peers(validation_time: float = 60.0):
                         peers_to_remove.append(peer_url)
                 except httpx.RequestError:
                     peers_to_remove.append(peer_url)
-            
+
             for peer_url in peers_to_remove:
                 available_peers.discard(peer_url)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,6 +37,7 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         pass
 
+
 peer_handler = FastAPI(lifespan=lifespan)
 
 peer_handler.add_middleware(
@@ -45,15 +48,18 @@ peer_handler.add_middleware(
     allow_headers=["*"],
 )
 
+
 @peer_handler.get("/")
 async def get_status():
     return {"status": "Central node is running", "api": "Registry"}
+
 
 @peer_handler.post("/hello")
 async def say_hello(payload: Hello) -> dict[str, str]:
     peer_url = payload.peer_url
     available_peers.add(peer_url)
     return {"message": f"Hello from central node! Received hello from {peer_url}"}
+
 
 @peer_handler.get("/peers", response_model=AvailablePeers)
 async def get_peers() -> AvailablePeers:

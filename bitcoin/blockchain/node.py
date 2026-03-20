@@ -21,10 +21,12 @@ class Node:
     def mine(self, miner: str):
         reward = Transaction(NETWORK_ID, miner, MINING_REWARD, time.time())
         transactions = self.pending_transactions + [reward]
-        
-        new_block = Block(self.blockchain.length, transactions, self.blockchain.last_hash)
+
+        new_block = Block(
+            self.blockchain.length, transactions, self.blockchain.last_hash
+        )
         new_block.mine()
-        
+
         try:
             self.blockchain.add_block(new_block)
             self.pending_transactions = []

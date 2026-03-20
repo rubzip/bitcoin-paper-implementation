@@ -6,7 +6,8 @@ class ProofOfWork(ABC):
     @abstractmethod
     def is_valid_hash(cls, block_hash: str) -> bool: ...
 
+
 class ZerosPOW(ProofOfWork):
     @classmethod
     def is_valid_hash(cls, block_hash: str) -> bool:
-        return block_hash[:4] == 4 * '0'
+        return block_hash[:4] == 4 * "0"

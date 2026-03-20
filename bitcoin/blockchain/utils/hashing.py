@@ -8,6 +8,7 @@ class Hasher:
     @classmethod
     def default_hash(cls) -> str: ...
 
+
 class Sha256Hasher(Hasher):
     @classmethod
     def hash(cls, x: str) -> str:
@@ -15,4 +16,4 @@ class Sha256Hasher(Hasher):
 
     @classmethod
     def default_hash(cls) -> str:
-        return 64 * '0'
+        return 64 * "0"

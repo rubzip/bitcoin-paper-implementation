@@ -21,7 +21,7 @@ class Transaction:
             "sender": self.sender,
             "receiver": self.receiver,
             "amount": self.amount,
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
         }
 
 
@@ -51,10 +51,10 @@ class Block:
             "prev_hash": self.prev_hash,
             "timestamp": self.timestamp,
             "nonce": self.nonce,
-            "hash": self.hash
+            "hash": self.hash,
         }
 
-    def mine(self):
+    def mine(self) -> str:
         while not ZerosPOW.is_valid_hash(self.hash):
             self.nonce += 1
             self.hash = self.get_hash()
