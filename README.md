@@ -92,3 +92,5 @@ uv run pytest
 
 ## To do
 For the moment I am using simple transactions (e.g: Alice -> Bob: 10 coins). But in the original paper there are UTXOs (Unspent Transaction Outputs). I should implement that.
+
+Merkle tree
