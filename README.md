@@ -37,6 +37,17 @@ def mine(self) -> str:
 ```
 This method increments nonce value until hash achives proof of work.
 
+If we define a Proof of Work (PoW) where the first $d$ (difficulty) digits of the hash must be zero—given that the hash is expressed as a hexadecimal number—the probability of randomly finding a valid hash is $16^{-d}$.Consequently, the expected number of attempts to find a valid nonce is:
+
+$$E[X] = \sum_{i=1}^{\infty} i \cdot (1-p)^{i-1} p = \frac{1}{p} = 16^{d}$$
+
+$$\sigma[X] = \sqrt{\sum_{i=1}^{\infty} (i - \mu)^2 p (1-p)^{i-1}} = \sqrt{\frac{1-p}{p^2}} \approx \frac{1}{p} = 16^{d}$$
+
+
+This results in a computational cost of $O(16^d)$ to mine a single block. 
+
+
+
 ### Rewardings (Coinbase)
 Called as *Coinbase* in the original paper. It is a reward for the miner who finds a valid Nonce value. It is a way to incentivize the creation of blocks, and also creates new coins. Satoshi had the hypothesis that if you give a reward for mining make less atractive to be malicius.
 
@@ -55,6 +66,7 @@ Also Gemini added a simple dashboard to visualize the blockchain, the transactio
 
 ### Project Structure
 
+```
 .
 ├── bitcoin/
 │   ├── api/            # FastAPI models, routes, and templates
@@ -63,7 +75,7 @@ Also Gemini added a simple dashboard to visualize the blockchain, the transactio
 ├── tests/              # Pytest integration & unit tests
 ├── main.py             # CLI entrypoint
 └── run_network.sh      # Orchestration script
-
+```
 
 ### Running the Network
 
